@@ -1,20 +1,7 @@
 import streamlit as st
 import pandas as pd
-from pymongo import MongoClient
 from datetime import datetime
-
-# =========================
-# 🔗 MongoDB Connection
-# =========================
-# MONGO_URI = "mongodb://localhost:27017"
-# DB_NAME = "blumdate_db"
-
-MONGO_URI = st.secrets["MONGO_URI"]
-DB_NAME = st.secrets["DB_NAME"]
-
-
-client = MongoClient(MONGO_URI)
-db = client[DB_NAME]
+from config.db import db
 
 # =========================
 # 🧹 Data Cleaning Function
