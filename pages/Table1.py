@@ -6,8 +6,16 @@ from datetime import datetime
 # =========================
 # 🔗 MongoDB Connection
 # =========================
-MONGO_URI = "mongodb://localhost:27017"
-DB_NAME = "blumdate_db"
+
+# mongo_uri = st.secrets["MONGO_URI"]
+# secret_key = st.secrets["DB"]
+
+# MONGO_URI = "mongodb://localhost:27017"
+# DB_NAME = "blumdate_db"
+
+MONGO_URI = st.secrets["MONGO_URI"]
+DB_NAME = st.secrets["DB_NAME"]
+
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
