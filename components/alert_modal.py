@@ -6,5 +6,7 @@ def alert_modal(message, level="info"):
         st.warning(message)
     elif level == "error":
         st.error(message)
+    elif level == "success":
+        st.success(message)
     else:
         st.info(message)

@@ -1,24 +1,18 @@
 import streamlit as st
-from pymongo import MongoClient
 import pandas as pd
+from config.db import db
+from modules.clean_mongo_docs import clean_mongo_docs
+from bson import ObjectId
 
-st.set_page_config(page_title="MongoDB Data Viewer", layout="wide")
-
-# --- MongoDB Connection ---
-MONGO_URI = "mongodb://localhost:27017"  # Replace with your actual URI
-DB_NAME = "blumdate_db"
-
-
-@st.cache_resource
-def get_db():
-    client = MongoClient(MONGO_URI)
-    return client[DB_NAME]
-
-
-db = get_db()
+st.set_page_config(page_title="MongoDB Data Viewer",
+                   page_icon="🗃", layout="wide")
 
 # --- Page Layout ---
 st.title("📊 MongoDB Data Viewer")
+
+if "user" not in st.session_state or not st.session_state.user:
+    st.warning("You’re not logged in! Go to the Login page.")
+    st.switch_page("pages/Auth/Login.py")  # ✅ CORRECT
 
 # List available collections
 collections = db.list_collection_names()
@@ -31,8 +25,6 @@ PAGE_SIZE = st.sidebar.number_input(
 # Use session_state to track current page
 if "page_number" not in st.session_state:
     st.session_state.page_number = 1
-
-# Function to reset pagination when collection changes
 
 
 def reset_page():
@@ -56,11 +48,7 @@ if selected_collection:
     if not data:
         st.warning("No data found.")
     else:
-        # Convert ObjectId to string
-        for doc in data:
-            doc["_id"] = str(doc["_id"])
-
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(clean_mongo_docs(data))
         st.dataframe(df, use_container_width=True)
 
         # --- Pagination Controls ---
@@ -81,11 +69,19 @@ if selected_collection:
                 st.session_state.page_number += 1
                 st.rerun()
 
-        # --- Optional: Download current page ---
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="⬇️ Download this page as CSV",
-            data=csv,
-            file_name=f"{selected_collection}_page{st.session_state.page_number}.csv",
-            mime="text/csv",
-        )
+        # Delete form
+        name = selected_collection
+        st.write("### 🗑️ Delete Record")
+        delete_id = st.text_input(
+            f"Enter {name} _id to delete:", key=f"delete_{name}")
+
+        if st.button(f"Delete from {name}", key=f"delete_btn_{name}"):
+            if delete_id:
+                result = collection.delete_one({"_id": ObjectId(delete_id)})
+                if result.deleted_count > 0:
+                    st.success(f"✅ Deleted record with _id: {delete_id}")
+                    st.rerun()  # Refresh page
+                else:
+                    st.warning(f"⚠️ No record found with _id: {delete_id}")
+            else:
+                st.error("Please enter a valid _id before deleting.")
