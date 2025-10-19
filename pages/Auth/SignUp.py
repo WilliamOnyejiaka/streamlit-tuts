@@ -1,13 +1,19 @@
+import json
 import streamlit as st
 from components.alert_modal import alert_modal
-from config import ACCESS_KEY
+from config import ACCESS_KEY, SECRET_KEY
 from config.db import db
+from modules.CookieManger import CookieManger
 from modules.password import hash_password
 
 st.set_page_config(page_title="Sign Up", page_icon="📝", layout="centered")
 
 st.title("📝 Create Your Account")
 
+cookie_manager = CookieManger("myapp_", SECRET_KEY)
+
+if not cookie_manager.ready():
+    st.stop()
 
 def create_admin(name: str, email: str, password: str):
     try:
@@ -22,7 +28,11 @@ def create_admin(name: str, email: str, password: str):
             })
 
             if result.inserted_id:
-                return {"error": False, "message": None}
+                return {"error": False, "message": None, "admin": {
+                    "name": name,
+                    "email": email,
+                    "_id": str(result.inserted_id)
+                }}
             return {"error": True, "message": "Something went wrong"}
         else:
             return {"error": True, "message": "Email already exists"}
@@ -51,5 +61,5 @@ with st.form("signup_form", clear_on_submit=False):
             if result['error']:
                 alert_modal(result['message'], level="error")
             else:
-                st.session_state.user = True
+                cookie_manager.set("admin", json.dumps(result["admin"]))
                 st.switch_page("pages/Dashboard/Tables.py")

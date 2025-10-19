@@ -1,18 +1,27 @@
 import streamlit as st
 import pandas as pd
+from streamlit_cookies_manager import EncryptedCookieManager
+from config import SECRET_KEY
 from config.db import db
+from modules.CookieManger import CookieManger
 from modules.clean_mongo_docs import clean_mongo_docs
 from bson import ObjectId
 
 st.set_page_config(page_title="MongoDB Data Viewer",
                    page_icon="🗃", layout="wide")
 
+cookie_manager = CookieManger("myapp_", SECRET_KEY)
+
+
+if not cookie_manager.ready():
+    st.stop()
+
 # --- Page Layout ---
 st.title("📊 MongoDB Data Viewer")
 
-if "user" not in st.session_state or not st.session_state.user:
+if cookie_manager.get("admin") == "":
     st.warning("You’re not logged in! Go to the Login page.")
-    st.switch_page("pages/Auth/Login.py")  # ✅ CORRECT
+    st.switch_page("pages/Auth/Login.py")
 
 # List available collections
 collections = db.list_collection_names()
@@ -29,7 +38,6 @@ if "page_number" not in st.session_state:
 
 def reset_page():
     st.session_state.page_number = 1
-
 
 # Reset when collection changes
 if st.session_state.get("last_collection") != selected_collection:

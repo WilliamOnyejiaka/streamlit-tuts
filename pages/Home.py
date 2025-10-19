@@ -1,6 +1,9 @@
 import streamlit as st
+from streamlit_cookies_manager import EncryptedCookieManager
 
 from components.alert_modal import alert_modal
+from config import SECRET_KEY
+from modules.CookieManger import CookieManger
 
 st.set_page_config(page_title="Home", page_icon="🏠")
 
@@ -13,6 +16,11 @@ st.set_page_config(
     layout="centered"
 )
 
+cookie_manager = CookieManger("myapp_", SECRET_KEY)
+
+if not cookie_manager.ready():
+    st.stop()
+    
 # --- Landing Page Content ---
 st.title("👋 Welcome to Blumdate DB Viewer")
 st.subheader("Your gateway to awesome features 🚀")
@@ -33,7 +41,7 @@ with col1:
 
 with col2:
     if st.button("🏃 Logout"):
-        st.session_state.user = False
+        cookie_manager.delete("admin")
         alert_modal("You have been logged out successfully","success")
 
 

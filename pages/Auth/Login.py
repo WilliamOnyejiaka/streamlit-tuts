@@ -1,20 +1,30 @@
 import streamlit as st
 from components.alert_modal import alert_modal
+from config import SECRET_KEY
 from config.db import db
 from modules.password import verify_password
+import json
+from modules.CookieManger import CookieManger
 
 st.set_page_config(page_title="Login", page_icon="🔑", layout="centered")
 
-st.title("🔑 Login To Your Account")
+cookie_manager = CookieManger("myapp_", SECRET_KEY)
 
+if not cookie_manager.ready():
+    st.stop()
+
+st.title("🔑 Login To Your Account")
 
 def login_admin(email: str, password: str):
     try:
         collection = db["admins"]
         admin = collection.find_one({"email": email})
         if admin:
-            valid_password = verify_password(password,admin['password'])
-            return {"error": False, "message": None} if valid_password else {"error": False, "message": None}
+            valid_password = verify_password(password, admin['password'])
+            admin["_id"] = str(admin["_id"])
+            del admin['password']
+            print(admin)
+            return {"error": False, "message": None, "admin": admin} if valid_password else {"error": False, "message": None}
         else:
             return {"error": True, "message": "Admin was not found"}
     except Exception as e:
@@ -39,5 +49,5 @@ with st.form("login", clear_on_submit=False):
             if result['error']:
                 alert_modal(result['message'], level="error")
             else:
-                st.session_state.user = True
+                cookie_manager.set("admin", json.dumps(result['admin']))
                 st.switch_page("pages/Dashboard/Tables.py")
