@@ -23,8 +23,7 @@ def login_admin(email: str, password: str):
             valid_password = verify_password(password, admin['password'])
             admin["_id"] = str(admin["_id"])
             del admin['password']
-            print(admin)
-            return {"error": False, "message": None, "admin": admin} if valid_password else {"error": False, "message": None}
+            return {"error": False, "message": None, "admin": admin} if valid_password else {"error": True, "message": "Invalid password"}
         else:
             return {"error": True, "message": "Admin was not found"}
     except Exception as e:
